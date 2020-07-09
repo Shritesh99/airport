@@ -19,7 +19,7 @@ PeerOrgs:
         - "127.0.0.1"
     Users:
       Count: 1
-  - Name: REGIONALOFFICE1
+  - Name: REGIONALOFFICE
     Domain: regionaloffice.example.com
     EnableNodeOUs: true
     Template:
