@@ -1,0 +1,166 @@
+---
+Organizations:
+    - &OrdererOrg
+        Name: OrdererOrg
+        ID: OrdererMSP
+        MSPDir: crypto-config/ordererOrganizations/example.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Writers:
+                Type: Signature
+                Rule: "OR('OrdererMSP.member')"
+            Admins:
+                Type: Signature
+                Rule: "OR('OrdererMSP.admin')"
+        OrdererEndpoints:
+            - orderer.example.com:7050
+
+    - &DGCAOffice
+        Name: DGCAOfficeMSP
+        ID: DGCAOfficeMSP
+        MSPDir: crypto-config/peerOrganizations/dgcaoffice.example.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('DGCAOfficeMSP.admin', 'DGCAOfficeMSP.peer', 'DGCAOfficeMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('DGCAOfficeMSP.admin', 'DGCAOfficeMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('DGCAOfficeMSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('DGCAOfficeMSP.peer')"
+        AnchorPeers:
+            - Host: peer0.dgcaoffice.example.com
+              Port: 7051
+
+    - &RegionalOffice
+        Name: RegionalOfficeMSP
+        ID: RegionalOfficeMSP
+        MSPDir: crypto-config/peerOrganizations/regionaloffice.example.com/msp
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('RegionalOfficeMSP.admin', 'RegionalOfficeMSP.peer', 'RegionalOfficeMSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('RegionalOfficeMSP.admin', 'RegionalOfficeMSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('RegionalOfficeMSP.admin')"
+            Endorsement:
+                Type: Signature
+                Rule: "OR('RegionalOfficeMSP.peer')"
+        AnchorPeers:
+            - Host: peer0.regionaloffice.example.com
+              Port: 9051
+
+Capabilities:
+    Channel: &ChannelCapabilities
+        V2_0: true
+    Orderer: &OrdererCapabilities
+        V2_0: true
+    Application: &ApplicationCapabilities
+        V2_0: true
+
+Application: &ApplicationDefaults
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        LifecycleEndorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+        Endorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+
+    Capabilities:
+        <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+    OrdererType: etcdraft
+    Addresses:
+        - orderer.example.com:7050
+    EtcdRaft:
+        Consenters:
+        - Host: orderer.example.com
+          Port: 7050
+          ClientTLSCert: crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+          ServerTLSCert: crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+    BatchTimeout: 2s
+    BatchSize:
+        MaxMessageCount: 10
+        AbsoluteMaxBytes: 99 MB
+        PreferredMaxBytes: 512 KB
+
+    Kafka:
+        Brokers:
+            - 127.0.0.1:9092
+
+    Organizations:
+
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        BlockValidation:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+
+Channel: &ChannelDefaults
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+    Capabilities:
+        <<: *ChannelCapabilities
+
+Profiles:
+
+    SupplyOrdererGenesis:
+        <<: *ChannelDefaults
+        Orderer:
+            <<: *OrdererDefaults
+            Organizations:
+                - *OrdererOrg
+            Capabilities:
+                <<: *OrdererCapabilities
+        Consortiums:
+            SampleConsortium:
+                Organizations:
+                    - *DGCAOffice
+                    - *RegionalOffice
+    SupplyChannel:
+        Consortium: SampleConsortium
+        <<: *ChannelDefaults
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *DGCAOffice
+                - *RegionalOffice
+            Capabilities:
+                <<: *ApplicationCapabilities
