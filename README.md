@@ -19,7 +19,6 @@ PeerOrgs:
   - Name: DGCAOFFICE # DGCA Office org
     Domain: dgcaoffice.example.com
     
-
   - Name: REGIONALOFFICE # Regional offices org
     Domain: regionaloffice.example.com
 ```
