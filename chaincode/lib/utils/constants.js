@@ -3,7 +3,10 @@
 const LICENSE = 'license';
 const STATE = 'state';
 
-module.exports = {
+const DB = {
     LICENSE,
     STATE
+};
+module.exports = {
+    DB
 };

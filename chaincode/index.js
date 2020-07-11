@@ -1,8 +1,10 @@
 'use strict';
 
-const LicenseContract = require('./lib/License');
-const StateContract = require('./lib/State');
+const RootContract = require('./lib/RootContract');
+const LicenseContract = require('./lib/LicenseContract');
+const StateContract = require('./lib/StateContract');
 
-module.exports.licenseContract = LicenseContract;
+module.exports.RootContract = RootContract;
+module.exports.LicenseContract = LicenseContract;
 module.exports.StateContract = StateContract;
-module.exports.contracts = [ StateContract, LicenseContract ];
+module.exports.contracts = [ RootContract, StateContract, LicenseContract ];

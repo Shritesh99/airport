@@ -96,7 +96,6 @@ checkCommitReadiness() {
     else
         echo "!!!!!!!!!!!!!!! After $MAX_RETRY attempts, Check commit readiness result on peer0.${ORG} is INVALID !!!!!!!!!!!!!!!!"
         echo
-        exit 1
     fi
 }
 
@@ -142,7 +141,6 @@ queryCommitted() {
     else
         echo "!!!!!!!!!!!!!!! After $MAX_RETRY attempts, Query chaincode definition result on peer0.${ORG} is INVALID !!!!!!!!!!!!!!!!"
         echo
-        exit 1
     fi
 }
 
@@ -198,6 +196,6 @@ queryCommitted 1
 queryCommitted 2
 
 ## Invoke the chaincode
-# chaincodeInvokeInit
+chaincodeInvokeInit
 
 exit 0
