@@ -1,6 +1,7 @@
 import { gql } from 'apollo-server';
 import { typeDefs } from 'graphql-scalars';
 // Models
+import StateTypedef from './StateTypedef';
 import UserTypedef from './UserTypedef';
 
 const root = gql`
@@ -16,5 +17,6 @@ type Mutation {
 export default [
     root,
     ...typeDefs,
+    StateTypedef,
     UserTypedef
 ];

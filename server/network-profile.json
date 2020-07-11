@@ -1,0 +1,100 @@
+{
+	"name": "net",
+	"version": "1.0.0",
+	"license": "Apache-2.0",
+	"channels": {
+		"mychannel": {
+			"peers": [
+				"peer0.dgcaoffice.example.com",
+				"peer0.regionaloffice.example.com"
+            ],
+            "orderers": [
+                "orderer.example.com"
+            ],
+			"connection": {
+				"timeout": {
+					"peer": {
+						"endorser": "6000",
+						"eventHub": "6000",
+						"eventReg": "6000"
+					}
+				}
+			}
+		}
+    },
+    "orderers": {
+        "orderer.example.com": {
+            "url": "grpcs://localhost:7050",
+            "grpcOptions": {
+            	"ssl-target-name-override": "orderer.example.com"
+            },
+            "tlsCACerts": {
+                "path": "/Users/shri99/WebProjects/airport/network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
+            }
+        }
+    },
+	"organizations": {
+		"DGCAOfficeMSP": {
+			"mspid": "DGCAOfficeMSP",
+			"adminPrivateKey": {
+				"path": "/Users/shri99/WebProjects/airport/network/crypto-config/peerOrganizations/dgcaoffice.example.com/users/Admin@dgcaoffice.example.com/msp/keystore/priv_sk"
+			},
+			"peers": ["peer0.dgcaoffice.example.com"],
+			"signedCert": {
+				"path": "/Users/shri99/WebProjects/airport/network/crypto-config/peerOrganizations/dgcaoffice.example.com/users/Admin@dgcaoffice.example.com/msp/signcerts/Admin@dgcaoffice.example.com-cert.pem"
+			}
+        },
+        "RegionalOfficeMSP": {
+            "mspid": "RegionalOfficeMSP",
+            "adminPrivateKey": {
+				"path": "/Users/shri99/WebProjects/airport/network/crypto-config/peerOrganizations/regionalaoffice.example.com/users/Admin@regionaloffice.example.com/msp/keystore/priv_sk"
+            },
+            "peers": ["peer0.regionaloffice.example.com"],
+			"signedCert": {
+				"path": "/Users/shri99/WebProjects/airport/network/crypto-config/peerOrganizations/regionaloffice.example.com/users/Admin@regionaloffice.example.com/msp/signcerts/Admin@regionalaoffice.example.com-cert.pem"
+			}
+        }
+	},
+	"peers": {
+		"peer0.dgcaoffice.example.com": {
+			"tlsCACerts": {
+				"path": "/Users/shri99/WebProjects/airport/network/crypto-config/peerOrganizations/dgcaoffice.example.com/peers/peer0.dgcaoffice.example.com/tls/ca.crt"
+			},
+			"url": "grpcs://localhost:7051",
+			"grpcOptions": {
+				"ssl-target-name-override": "peer0.dgcaoffice.example.com"
+			}
+        },
+        "peer0.regionaloffice.example.com": {
+			"tlsCACerts": {
+				"path": "/Users/shri99/WebProjects/airport/network/crypto-config/peerOrganizations/regionaloffice.example.com/peers/peer0.regionaloffice.example.com/tls/ca.crt"
+			},
+			"url": "grpcs://localhost:9051",
+			"grpcOptions": {
+				"ssl-target-name-override": "peer0.regionaloffice.example.com"
+			}
+		}
+	},
+	"certificateAuthorities": {
+		"caDGCAOffice": {
+			"url": "https://localhost:7054",
+			"httpOptions": {
+				"verify": false
+			},
+			"tlsCACerts": {
+				"path": "/Users/shri99/WebProjects/airport/network/crypto-config/peerOrganizations/dgcaoffice.example.com/ca/ca.dgcaoffice.example.com-cert.pem"
+			},
+			"caName": "caDGCAOffice"
+		},
+		"caRegionalffice": {
+			"url": "https://localhost:8054",
+			"httpOptions": {
+				"verify": false
+			},
+			"tlsCACerts": {
+				"path": "/Users/shri99/WebProjects/airport/network/crypto-config/peerOrganizations/regionaloffice.example.com/ca/ca.regionaloffice.example.com-cert.pem"
+			},
+			"caName": "caRegionalOffice"
+		}
+	}
+}

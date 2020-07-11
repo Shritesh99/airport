@@ -28,7 +28,7 @@ import { isAuth } from './utils/passport';
           return {
             req,
             res,
-            isAuth: auth,
+            auth,
             token: (auth) ? req.headers.authorization.split(' ')[1] : undefined
           };
         },

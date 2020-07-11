@@ -25,12 +25,12 @@ passport.use(
   new JwtStrategy(verifyOptions, (payload, done) => done(null, payload))
 );
 
-const createJwt = (id, email, privateKey, signCert) =>{
+const createJwt = (id, email, privateKey, signCert, mspId) =>{
   const today = new Date();
   const expirationDate = new Date(today);
   expirationDate.setDate(today.getDate() + (NODE_ENV === 'development' ? ONE_DAY : THIRTY_DAYS));
   const exp = parseInt(expirationDate.getTime() / 1000, 10);
-  return jwt.sign({ id, email, exp, privateKey, signCert }, JWT_SECRET, { algorithm: 'HS256', audience: verifyOptions.audience });
+  return jwt.sign({ id, email, exp, privateKey, signCert, mspId }, JWT_SECRET, { algorithm: 'HS256', audience: verifyOptions.audience });
 };
 
 const authenticate = (req, res) =>

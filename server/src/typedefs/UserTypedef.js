@@ -1,16 +1,6 @@
 import { gql } from 'apollo-server';
 
 const UserTypedef = gql`
-type State {
-  state: String!
-  country: String!
-}
-
-extend type Query {
-  states: [State]
-  createState(state: String!, country: String!): State
-}
-
 type Address {
   line1: String!
   line2: String
@@ -43,7 +33,7 @@ type AuthResponse {
 }
 
 input UserFilter{
-  _id: ID
+  id: ID
   email: String
 }
 

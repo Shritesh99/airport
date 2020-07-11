@@ -1,7 +1,7 @@
 import { AuthenticationError, ForbiddenError } from 'apollo-server';
-const os = require('os');
-const path = require('path');
-import { v4 as uuidv4 } from 'uuid';
+import { Gateway, Wallets } from 'fabric-network';
+
+const profile = require('../../network-profile.json');
 import bcrypt from 'bcrypt';
 
 import { createJwt } from '../utils/passport';
@@ -10,9 +10,6 @@ import { redis } from '../utils/db';
 const {
   CHAINCODE,
   CHANNEL,
-  MSPID,
-  NETWORK_PROFILE_PATH,
-  NETWORK_PROFILE,
 } = process.env;
 
 const saveToRedis = async (id, token) => {
@@ -29,20 +26,19 @@ const saveToRedis = async (id, token) => {
   }
 };
 
-const getController = async (args) => {
+const getContract = async (args) => {
   
 };
 
-
+const GETALLSTATES = 'getAllStates';
 const UserResolver = {
   Query: {
+    me: async (parent, args, context) => {
+      
+    },
     signIn: async (parent, args, context) => {
       
     },
-
-    createState: async (parent, args, context) => {
-
-    }
   },
 
   Mutation: {
