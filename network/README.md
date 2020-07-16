@@ -18,29 +18,29 @@ PeerOrgs:
 ##### Steps to create network
 1. Current dir
 ```
-cd airport
+cd airport/network/
 ```
 2. Generate crypto materials
 ```
-~/fabric-samples/bin/cryptogen generate --config=./network/crypto-config.yaml --output="./network/crypto-config"
+~/fabric-samples/bin/cryptogen generate --config=./crypto-config.yaml --output="./crypto-config"
 ```
 3. Generate genesis.block (first block)
 ```
-~/fabric-samples/bin/configtxgen -configPath ./network -profile SupplyOrdererGenesis -outputBlock ./network/channel-artifacts/genesis.block -channelID system-channel
+~/fabric-samples/bin/configtxgen -profile SupplyOrdererGenesis -outputBlock ./channel-artifacts/genesis.block -channelID system-channel
 ```
 4. Generate Channel.tx
 ```
-~/fabric-samples/bin/configtxgen -configPath ./network -profile SupplyChannel -channelID mychannel -outputCreateChannelTx ./network/channel-artifacts/channel.tx
+~/fabric-samples/bin/configtxgen -profile SupplyChannel -channelID mychannel -outputCreateChannelTx ./channel-artifacts/channel.tx
 ```
 5. Generate Anchor channel.tx
 ```
-~/fabric-samples/bin/configtxgen -configPath ./network -profile SupplyChannel -outputAnchorPeersUpdate ./channel-artifacts/DGCAOfficeMSPanchors.tx -channelID mychannel -asOrg DGCAOfficeMSP
+~/fabric-samples/bin/configtxgen -profile SupplyChannel -outputAnchorPeersUpdate ./channel-artifacts/DGCAOfficeMSPanchors.tx -channelID mychannel -asOrg DGCAOfficeMSP
 
-~/fabric-samples/bin/configtxgen -configPath ./network -profile SupplyChannel -outputAnchorPeersUpdate ./channel-artifacts/RegionalOfficeMSPanchors.tx -channelID mychannel -asOrg RegionalOfficeMSP
+~/fabric-samples/bin/configtxgen -profile SupplyChannel -outputAnchorPeersUpdate ./channel-artifacts/RegionalOfficeMSPanchors.tx -channelID mychannel -asOrg RegionalOfficeMSP
 ```
 6. **Fire up the network**
 ```
-docker-compose -f ./network/docker-compose-cli.yaml up -d
+docker-compose -f docker-compose-cli.yaml up -d
 ```
 7. Create channel
 ```
