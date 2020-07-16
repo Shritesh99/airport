@@ -192,8 +192,8 @@ checkCommitReadiness 2
 commitChaincodeDefinition
 
 # ## query on both orgs to see that the definition committed successfully
-queryCommitted 1
-queryCommitted 2
+# queryCommitted 1
+# queryCommitted 2
 
 ## Invoke the chaincode
 chaincodeInvokeInit

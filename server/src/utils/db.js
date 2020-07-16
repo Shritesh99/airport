@@ -12,5 +12,5 @@ const {
 // Redis
 const redisCache = new Redis({ host: REDIS_HOST, port: REDIS_PORT });
 const redis = new JSONCache(redisCache);
-
+// IPFS
 export { redis };

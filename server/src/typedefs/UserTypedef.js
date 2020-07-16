@@ -1,7 +1,9 @@
 import { gql } from 'apollo-server';
 
 const UserTypedef = gql`
+
 type Address {
+  id: ID!
   line1: String!
   line2: String
   pinCode: Int!
@@ -9,8 +11,17 @@ type Address {
   state: State!
 }
 
+input AddressFields{
+  line1: String
+  line2: String
+  pinCode: Int
+  city: String
+  state: StateFields
+}
+
 enum Roles {
   DGCA,
+  Admin,
   Operator,
   Owner,
   AerodromeInspector,
@@ -19,12 +30,13 @@ enum Roles {
 
 type User {
   id: ID!
-  email: EmailAddress!
-  firstName: String!
-  phone: PhoneNumber!
-  address: [Address!]
+  name: String!
+  email: String!
+  phone: PhoneNumber
   role: Roles
   signImage: String
+  govtId: String
+  address: Address
 }
 
 type AuthResponse {
@@ -41,8 +53,10 @@ input UserFields {
   name: String
   email: EmailAddress,
   phone: PhoneNumber,
-  password: String,
-  signImage: String
+  role: Roles,
+  signImage: Upload,
+  govtId: Upload
+  address: AddressFields
 }
 
 extend type Query {
@@ -53,7 +67,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  createUser(input: UserFields!, privatekeyFile: Upload!, signCertFile: Upload!): AuthResponse
+  createUser(input: UserFields!): User
   updateUser(filter: UserFilter, input: UserFields): Boolean!
 }
 `;

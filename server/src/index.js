@@ -4,8 +4,7 @@ import { ApolloServer } from 'apollo-server';
 import typeDefs from './typedefs';
 import resolvers from './resolvers';
 
-// Database Config
-import { isAuth } from './utils/passport';
+import { Auth } from './utils';
 
 (() => {
   try{
@@ -24,7 +23,7 @@ import { isAuth } from './utils/passport';
       typeDefs,
       resolvers,
       context: async ({ req, res }) => {
-        const auth =  await isAuth(req, res);
+        const auth =  await Auth.isAuth(req, res);
           return {
             req,
             res,

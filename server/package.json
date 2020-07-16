@@ -30,11 +30,13 @@
     "graphql": "^15.1.0",
     "graphql-scalars": "^1.1.5",
     "ioredis": "^4.17.3",
+    "ipfs": "^0.47.0",
     "jsonwebtoken": "^8.5.1",
+    "nodemailer": "^6.4.10",
     "passport": "^0.4.1",
     "passport-jwt": "^4.0.0",
     "redis-json": "^4.0.1",
-    "uuid": "8.2.0"
+    "uuid": "^8.2.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",

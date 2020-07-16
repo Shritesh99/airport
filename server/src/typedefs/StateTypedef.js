@@ -12,8 +12,8 @@ input StateFilter{
     state: String
 }
 input StateFields {
-    state: String!
-    country: String! 
+    state: String
+    country: String
 }
 extend type Query {
     state(filter: StateFilter): State

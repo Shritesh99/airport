@@ -6,7 +6,12 @@ const X509 = 'X.509';
 // Contracts
 const RootContract = 'RootContract';
 const StateContract = 'StateContract';
+const PersonContract = 'PersonContract';
 const LicenseContract = 'LicenseContract';
+
+// Mail Message
+const MailMessage = `\nCheck your Private key file and Signed certificate.`;
+const MailSubject = 'Airport Network Files';
 
 export { 
     ONE_DAY,
@@ -14,5 +19,8 @@ export {
     X509,
     RootContract,
     StateContract,
-    LicenseContract
+    PersonContract,
+    LicenseContract,
+    MailMessage,
+    MailSubject
 };

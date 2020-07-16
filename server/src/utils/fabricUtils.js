@@ -12,31 +12,42 @@ const {
 let wallet = null;
 let gateway = null;
 
-const getNetworkfromAuth = async (auth) => {
-    wallet = await Wallets.newInMemoryWallet();
+const getNetwork = async (certi, key, mspId, email) => {
+    if(!wallet) await setWallet(certi, key, mspId, email);
+    if(!gateway) {
+        gateway = new Gateway();
+        await gateway.connect(profile, { wallet, identity: email, discovery: { enabled: true, asLocalhost: true } });
+    }
+    return await gateway.getNetwork(CHANNEL);
+};
+const setWallet = async (certi, key, mspId, email) => {
+    if(!wallet) wallet = await Wallets.newInMemoryWallet();
     const x509Identity = {
         credentials: {
-            certificate: auth.signCert,
-            privateKey: auth.key,
+            certificate: certi,
+            privateKey: key,
         },
-        mspId: auth.mspId,
+        mspId,
         type: X509,
     };
-    await wallet.put(auth.email, x509Identity);
-
-    gateway = new Gateway();
-
-    await gateway.connect(profile, { wallet, identity: auth.email, discovery: { enabled: true, asLocalhost: true } });
-
-    return await gateway.getNetwork(CHANNEL);
+    await wallet.put(email, x509Identity);
+    return wallet;
 };
 
 const cleanup = async (email) => {
-    if(gateway) gateway.disconnect();
-    if(wallet) await wallet.remove(email);
+    if(gateway) { 
+        gateway.disconnect();
+        gateway = null;
+    }
+    if(wallet) { 
+        await wallet.remove(email);
+        wallet = null;
+    }
 };
 
-export default {
-    getNetworkfromAuth,
+export {
+    getNetwork,
+    setWallet,
+    wallet,
     cleanup
-}
+};
