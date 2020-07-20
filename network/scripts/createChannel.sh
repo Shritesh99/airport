@@ -20,27 +20,17 @@ joinChannel() {
     peer channel join -b ./channel-artifacts/$CHANNEL_NAME.block >&log.txt
 	cat log.txt
 	echo
-	verifyResult $res "After $MAX_RETRY attempts, peer0.org${ORG} has failed to join channel '$CHANNEL_NAME' "
 }
 
 updateAnchorPeers() {
     ORG=$1
     setGlobals $ORG
 	
-		peer channel update -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com -c $CHANNEL_NAME -f ./channel-artifacts/${CORE_PEER_LOCALMSPID}anchors.tx --tls --cafile $ORDERER_CA >&log.txt
+		peer channel update -o orderer.example.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/${CORE_PEER_LOCALMSPID}anchors.tx --tls --cafile $ORDERER_CA >&log.txt
     
 	cat log.txt
-    verifyResult $res "Anchor peer update failed"
     echo "===================== Anchor peers updated for org '$CORE_PEER_LOCALMSPID' on channel '$CHANNEL_NAME' ===================== "
     echo
-}
-
-verifyResult() {
-    if [ $1 -ne 0 ]; then
-        echo "!!!!!!!!!!!!!!! "$2" !!!!!!!!!!!!!!!!"
-        echo
-        exit 1
-    fi
 }
 
 ## Create channel

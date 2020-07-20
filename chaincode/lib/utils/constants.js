@@ -69,10 +69,11 @@ const STATEIDS = [
 
 const STATES = [];
 STATESARR.forEach((v,i) => {
-    const item = {};
-    item.id = STATEIDS[i];
-    item.state = v;
-    item.country = 'India';
+    const item = {
+        id: STATEIDS[i],
+        state: v,
+        country: 'India'
+    };
     STATES.push(item);
 });
 

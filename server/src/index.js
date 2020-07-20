@@ -1,45 +1,41 @@
-import dotenv from 'dotenv';
-import { ApolloServer } from 'apollo-server';
+import dotenv from "dotenv";
+import { ApolloServer } from "apollo-server";
 
-import typeDefs from './typedefs';
-import resolvers from './resolvers';
+import typeDefs from "./typedefs";
+import resolvers from "./resolvers";
 
-import { Auth } from './utils';
+import { Auth } from "./utils";
 
 (() => {
-  try{
+  try {
     // Dotenv config
     dotenv.config();
-    const {
-      NODE_ENV
-    } = process.env;
+    const { NODE_ENV } = process.env;
 
     const server = new ApolloServer({
       cors: true,
-      playground: NODE_ENV === 'development' ? true : false,
+      playground: NODE_ENV === "development" ? true : false,
       introspection: true,
       tracing: true,
-      path: '/',
+      path: "/",
       typeDefs,
       resolvers,
       context: async ({ req, res }) => {
-        const auth =  await Auth.isAuth(req, res);
-          return {
-            req,
-            res,
-            auth,
-            token: (auth) ? req.headers.authorization.split(' ')[1] : undefined
-          };
-        },
+        const auth = await Auth.isAuth(req, res);
+        return {
+          req,
+          res,
+          auth,
+          token: auth ? req.headers.authorization.split(" ")[1] : undefined,
+        };
+      },
     });
 
     // The `listen` method launches a web server.
     server.listen().then(({ url }) => {
       console.log(`🚀  Server ready at ${url}`);
     });
-  }
-  catch (e) {
+  } catch (e) {
     console.error(e);
   }
 })();
-
