@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
-const { Contract } = require('fabric-contract-api');
+const { Contract } = require("fabric-contract-api");
 
-const { CONSTANTS, Helper } = require('./utils');
+const { CONSTANTS, Helper } = require("./utils");
 
 class AddressContract extends Contract {
     async getAddressByID(ctx, id) {
@@ -18,7 +18,7 @@ class AddressContract extends Contract {
                 return JSON.stringify(address);
             }
         } else {
-            throw new Error('No id provided');
+            throw new Error("No id provided");
         }
     }
 
@@ -26,7 +26,7 @@ class AddressContract extends Contract {
         const stateR = await Helper.getByField(
             ctx,
             CONSTANTS.DB.STATE,
-            'state',
+            "state",
             state
         );
         if (Object.keys(stateR).length > 0) {
@@ -34,7 +34,7 @@ class AddressContract extends Contract {
             await Helper.createItem(ctx, CONSTANTS.DB.ADDRESS, item);
             return JSON.stringify(item);
         } else {
-            throw new Error('No state exist');
+            throw new Error("No state exist");
         }
     }
 }

@@ -1,9 +1,10 @@
-'use strict';
+"use strict";
 
-const { Contract } = require('fabric-contract-api');
+const { Contract } = require("fabric-contract-api");
 
-const { CONSTANTS, Helper } = require('./utils');
-const AddressContract = require('./AddressContract');
+const { CONSTANTS, Helper } = require("./utils");
+const AddressContract = require("./AddressContract");
+const LicenseContract = require("./LicenseContract");
 
 class PersonContract extends Contract {
     async getUserById(ctx, id) {
@@ -15,9 +16,20 @@ class PersonContract extends Contract {
                     await address.getAddressByID(ctx, user.address)
                 );
             }
+            if (user.licenses) {
+                const licenseC = new LicenseContract();
+                const licenses = [];
+                user.licenses.forEach(async (v) => {
+                    const license = JSON.parse(
+                        await licenseC.getLicenseById(v)
+                    );
+                    licenses.push(license);
+                });
+                user.license = licenses;
+            }
             return JSON.stringify(user);
         } else {
-            throw new Error('No id provided');
+            throw new Error("No id provided");
         }
     }
 
@@ -26,7 +38,7 @@ class PersonContract extends Contract {
             const user = await Helper.getByField(
                 ctx,
                 CONSTANTS.DB.PERSON,
-                'email',
+                "email",
                 email
             );
             if (user.address) {
@@ -39,7 +51,29 @@ class PersonContract extends Contract {
             }
             return JSON.stringify(user);
         } else {
-            throw new Error('No email provided');
+            throw new Error("No email provided");
+        }
+    }
+
+    async getUsersByRoles(ctx, role) {
+        if (role) {
+            const users = await Helper.getItemsByField(
+                ctx,
+                CONSTANTS.DB.PERSON,
+                "role",
+                role
+            );
+            const addressC = new AddressContract();
+            users.forEach(async (user) => {
+                if (user.address) {
+                    user.address = JSON.parse(
+                        await addressC.getAddressByID(ctx, user.address)
+                    );
+                }
+            });
+            return JSON.stringify(users);
+        } else {
+            throw new Error("No role provided");
         }
     }
 
@@ -63,10 +97,44 @@ class PersonContract extends Contract {
         const user = await Helper.getByField(
             ctx,
             CONSTANTS.DB.PERSON,
-            'email',
+            "email",
             email
         );
         if (!(Object.keys(user).length > 0)) {
+            if (role === CONSTANTS.ROLES.RegionalOfficeHead) {
+                const ins = await ctx.stub.getState(
+                    CONSTANTS.DB.REGIONALOFFICE
+                );
+                const item = ins.toString();
+                const json = JSON.parse(item);
+                json.head = id;
+                await ctx.stub.putState(
+                    CONSTANTS.DB.REGIONALOFFICE,
+                    Buffer.from(JSON.stringify(json))
+                );
+            } else if (role === CONSTANTS.ROLES.AerodromeInspector) {
+                const ins = await ctx.stub.getState(
+                    CONSTANTS.DB.REGIONALOFFICE
+                );
+                const item = ins.toString();
+                const json = JSON.parse(item);
+                json.inspectors.push(id);
+                await ctx.stub.putState(
+                    CONSTANTS.DB.REGIONALOFFICE,
+                    Buffer.from(JSON.stringify(json))
+                );
+            } else if (role === CONSTANTS.ROLES.Operator) {
+                const ins = await ctx.stub.getState(
+                    CONSTANTS.DB.REGIONALOFFICE
+                );
+                const item = ins.toString();
+                const json = JSON.parse(item);
+                json.operators.push(id);
+                await ctx.stub.putState(
+                    CONSTANTS.DB.REGIONALOFFICE,
+                    Buffer.from(JSON.stringify(json))
+                );
+            }
             const addressContract = new AddressContract();
             const address = JSON.parse(
                 await addressContract.createAddress(
@@ -94,7 +162,7 @@ class PersonContract extends Contract {
             item.address = address;
             return JSON.stringify(item);
         } else {
-            throw new Error('User already exist');
+            throw new Error("User already exist");
         }
     }
 }

@@ -1,8 +1,7 @@
-import { AuthenticationError } from "apollo-server";
+import { AuthenticationError, ForbiddenError } from "apollo-server";
 import FabricCAServices from "fabric-ca-client";
 import bcrypt from "bcrypt";
 import { v4 } from "uuid";
-import * as Password from "secure-random-password";
 import { Constants, FabricUtils, Utils, DB, Auth } from "../utils";
 
 const {
@@ -63,7 +62,48 @@ const UserResolver = {
           "getUserByEmail",
           auth.email
         );
+        //await FabricUtils.cleanup(auth.email);
         return JSON.parse(userR.toString());
+      } else {
+        return new AuthenticationError("User not authenticated");
+      }
+    },
+    user: async (parent, args, context) => {
+      const auth = context.auth;
+      if (auth) {
+        const contract = await getContractFromAuth(auth);
+        const userR = await contract.evaluateTransaction(
+          args.filter.id ? "getUserById" : "getUserByEmail",
+          args.filter.id ? args.filter.id : args.filter.email
+        );
+        //await FabricUtils.cleanup(auth.email);
+        return JSON.parse(userR.toString());
+      } else {
+        return new AuthenticationError("User not authenticated");
+      }
+    },
+    users: async (parent, args, context) => {
+      const auth = context.auth;
+      if (auth) {
+        const contract = await getContractFromAuth(auth);
+        const userR = await contract.evaluateTransaction(
+          "getUsersByRoles",
+          args.role
+        );
+        await FabricUtils.cleanup(auth.email);
+        return JSON.parse(userR.toString());
+      } else {
+        return new AuthenticationError("User not authenticated");
+      }
+    },
+    logout: async (parent, args, context) => {
+      const auth = context.auth;
+      if (auth) {
+        const redisData = await DB.redis.get(auth.id);
+        const token = context.token;
+        const arr = redisData["access_tokens"].filter((v) => v !== token);
+        await DB.redis.rewrite(auth.id, { access_tokens: arr });
+        return true;
       } else {
         return new AuthenticationError("User not authenticated");
       }
@@ -84,38 +124,27 @@ const UserResolver = {
         args.email
       );
       const user = JSON.parse(userR.toString());
-      await FabricUtils.cleanup(args.email);
+      //await FabricUtils.cleanup(args.email);
       const passwordMatch = await bcrypt.compare(args.password, user.password);
       if (!passwordMatch) return new AuthenticationError("Invalid password");
       const caCerti = await Utils.pathToString(REGIONALOFFICECATSL, true);
-      if (args.email === "admin") {
-        const ca = new FabricCAServices(
-          REGIONALOFFICECAURL,
-          {
-            trustedRoots: caCerti,
-            verify: false,
-          },
-          REGIONALOFFICECA
-        );
-        const enrollment = await ca.enroll({
-          enrollmentID: args.email,
-          enrollmentSecret: args.password,
-        });
-        const token = Auth.createJwt(
-          user.id,
-          user.email,
-          enrollment.key.toBytes(),
-          enrollment.certificate,
-          REGIONALOFFICEMSPID
-        );
-        await saveToRedis(user.id, token);
-        return { token, user };
-      }
+      const ca = new FabricCAServices(
+        REGIONALOFFICECAURL,
+        {
+          trustedRoots: caCerti,
+          verify: false,
+        },
+        REGIONALOFFICECA
+      );
+      const enrollment = await ca.enroll({
+        enrollmentID: args.email,
+        enrollmentSecret: args.password,
+      });
       const token = Auth.createJwt(
         user.id,
         user.email,
-        key,
-        certi,
+        enrollment.key.toBytes(),
+        enrollment.certificate,
         REGIONALOFFICEMSPID
       );
       await saveToRedis(user.id, token);
@@ -131,8 +160,29 @@ const UserResolver = {
         const govtIdFile = await args.input.govtId;
         const govtId = await Utils.putFileOnIpFs(govtIdFile);
         const signFile = await Utils.putFileOnIpFs(signImageFile);
-        const password = Password.randomPassword();
-        const hashedPassword = await bcrypt.hashSync(password, 12);
+        const ca = new FabricCAServices(
+          auth.mspId === DGCAOFFICEMSPID ? DGCAOFFICECAURL : REGIONALOFFICECAURL
+        );
+        const adminIdentity = await FabricUtils.wallet.get(auth.email);
+        const provider = FabricUtils.wallet
+          .getProviderRegistry()
+          .getProvider(adminIdentity.type);
+        const adminUser = await provider.getUserContext(
+          adminIdentity,
+          auth.email
+        );
+        const secret = await ca.register(
+          {
+            enrollmentID: args.input.email,
+            role: "client",
+          },
+          adminUser
+        );
+        const enrollment = await ca.enroll({
+          enrollmentID: args.input.email,
+          enrollmentSecret: secret,
+        });
+        const hashedPassword = await bcrypt.hashSync(secret, 12);
         const contract = await getContractFromAuth(auth);
         const userR = await contract.submitTransaction(
           "createUser",
@@ -152,34 +202,8 @@ const UserResolver = {
           args.input.address.pinCode
         );
         const user = JSON.parse(userR.toString());
-        const ca = new FabricCAServices(
-          auth.mspId === DGCAOFFICEMSPID ? DGCAOFFICECAURL : REGIONALOFFICECAURL
-        );
-        const adminIdentity = await FabricUtils.wallet.get(auth.email);
-        const provider = FabricUtils.wallet
-          .getProviderRegistry()
-          .getProvider(adminIdentity.type);
-        const adminUser = await provider.getUserContext(
-          adminIdentity,
-          auth.email
-        );
-        const secret = await ca.register(
-          {
-            enrollmentID: args.input.email,
-            role: args.input.role,
-          },
-          adminUser
-        );
-        const enrollment = await ca.enroll({
-          enrollmentID: args.input.email,
-          enrollmentSecret: secret,
-        });
-        await Utils.sendMailfromEnrolment(
-          enrollment,
-          password,
-          args.input.email
-        );
-        await FabricUtils.cleanup(args.input.email);
+        await Utils.sendMailfromEnrolment(enrollment, args.input.email, secret);
+        await FabricUtils.cleanup(auth.email);
         return user;
       } else {
         return new AuthenticationError("User not authenticated");

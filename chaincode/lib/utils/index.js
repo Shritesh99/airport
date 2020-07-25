@@ -1,10 +1,10 @@
-'use strict';
+"use strict";
 // Constants
-const CONSTANTS = require('./constants');
+const CONSTANTS = require("./constants");
 
-const Helper = require('./helper');
+const Helper = require("./helper");
 
 module.exports = {
     CONSTANTS,
-    Helper
+    Helper,
 };

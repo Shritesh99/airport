@@ -58,7 +58,7 @@ const deleteFile = (path) =>
     fs.unlink(path, (err) => (err ? reject(err) : resolve()))
   );
 
-const sendMailfromEnrolment = async (enrollment, password, email) => {
+const sendMailfromEnrolment = async (enrollment, email, password) => {
   const keyName = `${email}_sk`;
   const certiName = `${email}.pem`;
   await writeFile(enrollment.certificate, FILESPATH + certiName);
@@ -70,11 +70,12 @@ const sendMailfromEnrolment = async (enrollment, password, email) => {
       pass: MAILPASSWORD,
     },
   });
+  const msg = `Hello ${email}\n${Constants.MailMessage}\nYour password is ${password}\nPlease keep these files safe.`;
   const mailOptions = {
     from: Constants.MailSubject,
     to: email,
     subject: Constants.MailSubject,
-    text: `Hello ${email}\n${Constants.MailMessage}\nYour password is ${password}\nPlease keep these files safe.`,
+    text: msg,
     attachments: [
       {
         filename: keyName,
@@ -88,7 +89,7 @@ const sendMailfromEnrolment = async (enrollment, password, email) => {
   };
   await mail.sendMail(mailOptions);
   await deleteFile(FILESPATH + certiName);
-  await deleteFile(FILESPATH+ keyName);
+  await deleteFile(FILESPATH + keyName);
 };
 export {
   fileToString,

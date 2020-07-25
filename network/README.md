@@ -22,21 +22,21 @@ cd airport/network/
 ```
 2. Generate crypto materials
 ```
-~/fabric-samples/bin/cryptogen generate --config=./crypto-config.yaml --output="./crypto-config"
+cryptogen generate --config=./crypto-config.yaml --output="./crypto-config"
 ```
 3. Generate genesis.block (first block)
 ```
-~/fabric-samples/bin/configtxgen -profile SupplyOrdererGenesis -outputBlock ./channel-artifacts/genesis.block -channelID system-channel
+configtxgen -profile SupplyOrdererGenesis -outputBlock ./channel-artifacts/genesis.block -channelID system-channel
 ```
 4. Generate Channel.tx
 ```
-~/fabric-samples/bin/configtxgen -profile SupplyChannel -channelID mychannel -outputCreateChannelTx ./channel-artifacts/channel.tx
+configtxgen -profile SupplyChannel -channelID mychannel -outputCreateChannelTx ./channel-artifacts/channel.tx
 ```
 5. Generate Anchor channel.tx
 ```
-~/fabric-samples/bin/configtxgen -profile SupplyChannel -outputAnchorPeersUpdate ./channel-artifacts/DGCAOfficeMSPanchors.tx -channelID mychannel -asOrg DGCAOfficeMSP
+configtxgen -profile SupplyChannel -outputAnchorPeersUpdate ./channel-artifacts/DGCAOfficeMSPanchors.tx -channelID mychannel -asOrg DGCAOfficeMSP
 
-~/fabric-samples/bin/configtxgen -profile SupplyChannel -outputAnchorPeersUpdate ./channel-artifacts/RegionalOfficeMSPanchors.tx -channelID mychannel -asOrg RegionalOfficeMSP
+configtxgen -profile SupplyChannel -outputAnchorPeersUpdate ./channel-artifacts/RegionalOfficeMSPanchors.tx -channelID mychannel -asOrg RegionalOfficeMSP
 ```
 6. **Fire up the network**
 ```

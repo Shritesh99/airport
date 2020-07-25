@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
-const { Contract } = require('fabric-contract-api');
+const { Contract } = require("fabric-contract-api");
 
-const { CONSTANTS, Helper } = require('./utils');
+const { CONSTANTS, Helper } = require("./utils");
 
 class StateContract extends Contract {
     async getStatebyID(ctx, id) {
@@ -10,7 +10,7 @@ class StateContract extends Contract {
             const state = await Helper.getById(ctx, CONSTANTS.DB.STATE, id);
             return JSON.stringify(state);
         } else {
-            throw new Error('No id exist');
+            throw new Error("No id exist");
         }
     }
     async getStatebyName(ctx, state) {
@@ -18,19 +18,19 @@ class StateContract extends Contract {
             const stateR = await Helper.getByField(
                 ctx,
                 CONSTANTS.DB.STATE,
-                'state',
+                "state",
                 state
             );
             return JSON.stringify(stateR);
         } else {
-            throw new Error('No matching state');
+            throw new Error("No matching state");
         }
     }
     async createState(ctx, id, state, country) {
         const stateR = await Helper.getByField(
             ctx,
             CONSTANTS.DB.STATE,
-            'state',
+            "state",
             state
         );
         if (!Object.keys(stateR).length > 0) {

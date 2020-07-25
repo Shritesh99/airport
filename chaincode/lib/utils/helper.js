@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 const getById = async (ctx, db, id) => {
     const ins = await ctx.stub.getState(db);
@@ -25,6 +25,15 @@ const getByField = async (ctx, db, field, item) => {
     });
     return itemR;
 };
+
+const getItemsByField = async (ctx, db, field, item) => {
+    const ins = await ctx.stub.getState(db);
+    const arr = ins.toString();
+    const json = JSON.parse(arr);
+    const itemR = json.filter((i) => i[field] === item);
+    return itemR;
+};
+
 const createItem = async (ctx, db, item) => {
     const ins = await ctx.stub.getState(db);
     const arr = ins.toString();
@@ -32,8 +41,20 @@ const createItem = async (ctx, db, item) => {
     json.push(item);
     await ctx.stub.putState(db, Buffer.from(JSON.stringify(json)));
 };
+
+const updateItem = async (ctx, db, id, item) => {
+    const ins = await ctx.stub.getState(db);
+    const arr = ins.toString();
+    const json = JSON.parse(arr);
+    const newArr = json.filter((i) => i.id !== id);
+    newArr.push(item);
+    await ctx.stub.putState(db, Buffer.from(JSON.stringify(item)));
+};
+
 module.exports = {
     getById,
     getByField,
+    getItemsByField,
     createItem,
+    updateItem,
 };
