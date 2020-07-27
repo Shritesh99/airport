@@ -3,36 +3,47 @@
 ## Airport network chaincode db structure
 
 As Hyperledger fabric stores data in states as in key-value pair (NOSQL Db). Airport Network's state's keys basically look like.
+
 ```
 "Key": Buffer(Array of Data)
 ```
 
-#### Different keys
+The DB is diveded into different keys values.
 
-- **STATE**
 ```
-    "state": [
-        ...
-            {
-                id: "uuidv4()", # string
-                state: "...", # string
-                country: "...", # string
-            }
-        ...     
-    ]
+    STATE: [...ids...]
+    ADDRESS: [...ids...],
+    PERSON: [...ids...],
+    LICENSE: [...ids...],
+    REGIONALOFFICE: Object
 ```
-- **ADDRESS**  
+
+These DB contains list of ids of objects.
+
+#### Different DB Object schemas
+
+-   **STATE**
+
 ```
-    "address": [
-        ...
-            {
-                id: "uuidv4()", # string
-                line1: "...", # string
-                line2: "...", # string
-                city: "..., # string
-                state: "STATE.id", # string
-                pinCode: ..., # int
-            }
-        ...     
-    ]
+    "state-{id}":
+        {
+            id: "uuidv4()", # string
+            state: "...", # string
+            country: "...", # string
+        }
+```
+
+-   **ADDRESS**
+
+```
+    "address-{id}":
+        {
+            id: "uuidv4()", # string
+            line1: "...", # string
+            line2: "...", # string
+            city: "..., # string
+            state: "STATE.id", # string
+            pinCode: ..., # int
+        }
+
 ```

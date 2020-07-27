@@ -95,6 +95,15 @@ const FORMSTATUS = {
     NotAproved: "NotAproved",
     Approved: "Approved",
 };
+const LICENSESTATUS = {
+    Approved: "Approved",
+    Rejected: "Rejected",
+    UnderInspection: "UnderInspection",
+    Correct_Data: "Correct_Data",
+    Waiting_for_misitries_approval: "Waiting_for_misitries_approval",
+    Waiting_For_Data: "Waiting_For_Data",
+};
+const LICENSE_STATUS = "License_Status";
 
 const DB = {
     STATE,
@@ -107,6 +116,9 @@ const DB = {
 module.exports = {
     DB,
     STATES,
+    STATEIDS,
     ROLES,
     FORMSTATUS,
+    LICENSESTATUS,
+    LICENSE_STATUS,
 };

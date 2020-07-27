@@ -90,7 +90,7 @@ const UserResolver = {
           "getUsersByRoles",
           args.role
         );
-        await FabricUtils.cleanup(auth.email);
+        //await FabricUtils.cleanup(auth.email);
         return JSON.parse(userR.toString());
       } else {
         return new AuthenticationError("User not authenticated");
@@ -124,27 +124,40 @@ const UserResolver = {
         args.email
       );
       const user = JSON.parse(userR.toString());
+      if (Object.keys(user).length === 0)
+        return new ForbiddenError("User not exist");
       //await FabricUtils.cleanup(args.email);
       const passwordMatch = await bcrypt.compare(args.password, user.password);
       if (!passwordMatch) return new AuthenticationError("Invalid password");
-      const caCerti = await Utils.pathToString(REGIONALOFFICECATSL, true);
-      const ca = new FabricCAServices(
-        REGIONALOFFICECAURL,
-        {
-          trustedRoots: caCerti,
-          verify: false,
-        },
-        REGIONALOFFICECA
-      );
-      const enrollment = await ca.enroll({
-        enrollmentID: args.email,
-        enrollmentSecret: args.password,
-      });
+      if (args.email === "admin") {
+        const caCerti = await Utils.pathToString(REGIONALOFFICECATSL, true);
+        const ca = new FabricCAServices(
+          REGIONALOFFICECAURL,
+          {
+            trustedRoots: caCerti,
+            verify: false,
+          },
+          REGIONALOFFICECA
+        );
+        const enrollment = await ca.enroll({
+          enrollmentID: args.email,
+          enrollmentSecret: args.password,
+        });
+        const token = Auth.createJwt(
+          user.id,
+          user.email,
+          enrollment.key.toBytes(),
+          enrollment.certificate,
+          REGIONALOFFICEMSPID
+        );
+        await saveToRedis(user.id, token);
+        return { token, user };
+      }
       const token = Auth.createJwt(
         user.id,
         user.email,
-        enrollment.key.toBytes(),
-        enrollment.certificate,
+        key,
+        certi,
         REGIONALOFFICEMSPID
       );
       await saveToRedis(user.id, token);
@@ -160,11 +173,30 @@ const UserResolver = {
         const govtIdFile = await args.input.govtId;
         const govtId = await Utils.putFileOnIpFs(govtIdFile);
         const signFile = await Utils.putFileOnIpFs(signImageFile);
-        const ca = new FabricCAServices(
-          auth.mspId === DGCAOFFICEMSPID ? DGCAOFFICECAURL : REGIONALOFFICECAURL
+        const caCerti = await Utils.pathToString(
+          auth.mspId === DGCAOFFICEMSPID
+            ? DGCAOFFICECATSL
+            : REGIONALOFFICECATSL,
+          true
         );
-        const adminIdentity = await FabricUtils.wallet.get(auth.email);
-        const provider = FabricUtils.wallet
+        const ca = new FabricCAServices(
+          auth.mspId === DGCAOFFICEMSPID
+            ? DGCAOFFICECAURL
+            : REGIONALOFFICECAURL,
+          {
+            trustedRoots: caCerti,
+            verify: false,
+          },
+          auth.mspId === DGCAOFFICEMSPID ? DGCAOFFICECA : REGIONALOFFICECA
+        );
+        const wallet = await FabricUtils.setWallet(
+          auth.signCert,
+          auth.privateKey,
+          auth.mspId,
+          auth.email
+        );
+        const adminIdentity = await wallet.get(auth.email);
+        const provider = wallet
           .getProviderRegistry()
           .getProvider(adminIdentity.type);
         const adminUser = await provider.getUserContext(
@@ -203,7 +235,7 @@ const UserResolver = {
         );
         const user = JSON.parse(userR.toString());
         await Utils.sendMailfromEnrolment(enrollment, args.input.email, secret);
-        await FabricUtils.cleanup(auth.email);
+        //await FabricUtils.cleanup(auth.email);
         return user;
       } else {
         return new AuthenticationError("User not authenticated");

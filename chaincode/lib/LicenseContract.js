@@ -1,97 +1,157 @@
 "use strict";
 
 const { Contract } = require("fabric-contract-api");
-
+const PersonContract = require("./PersonContract");
 const { CONSTANTS, Helper } = require("./utils");
-const AddressContract = require("./AddressContract");
 
 class LicenseContract extends Contract {
     async getLicenseById(ctx, id) {
-        if (id) {
-            const license = await Helper.getById(ctx, CONSTANTS.DB.LICENSE, id);
-            const user = await Helper.getById(
-                ctx,
-                CONSTANTS.DB.PERSON,
-                license.operator
-            );
-            if (user.address) {
-                const address = new AddressContract();
-                user.address = JSON.parse(
-                    await address.getAddressByID(ctx, user.address)
-                );
-            }
-            license.operator = user;
-            return JSON.stringify(license);
-        } else {
-            throw new Error("No id provided");
+        const license = await Helper.getItemById(ctx, CONSTANTS.DB.LICENSE, id);
+        const personC = new PersonContract();
+        if (license.operator) {
+            const operator = await personC.getUserById(ctx, license.operator);
+            license.operator = JSON.parse(operator);
         }
+        if (license.inpector) {
+            const inpector = await personC.getUserById(ctx, license.inpector);
+            license.inpector = JSON.parse(inpector);
+        }
+        return JSON.stringify(license);
     }
+
     async updateLicenseStatus(ctx, id, status) {
-        const license = await Helper.getById(ctx, CONSTANTS.DB.LICENSE, id);
-        if (Object.keys(id).length > 0) {
-            license.status = status;
-            await Helper.updateItem(ctx, CONSTANTS.DB.LICENSE, id, license);
-        } else {
-            throw new Error("License not found");
-        }
+        const license = await Helper.getItemById(ctx, CONSTANTS.DB.LICENSE, id);
+        license.status = status;
+        await Helper.updateItem(ctx, CONSTANTS.DB.LICENSE, id, license);
+        ctx.stub.setEvent(
+            `${CONSTANTS.LICENSESTATUS}-${id}`,
+            Buffer.from(JSON.stringify(license))
+        );
+    }
+
+    async assignInspector(ctx, id, iid) {
+        const personC = new PersonContract();
+        const jsonP = JSON.parse(await personC.getUserById(ctx, iid));
+        const license = await Helper.getItemById(ctx, CONSTANTS.DB.LICENSE, id);
+        jsonP.licenses.push(id);
+        await Helper.updateItem(ctx, CONSTANTS.DB.PERSON, iid, jsonP);
+        license.inspector = iid;
+        await Helper.updateItem(ctx, CONSTANTS.DB.LICENSE, id, license);
     }
 
     async createLicense(ctx, id, oId, data) {
-        const jsonP = Helper.getById(ctx, CONSTANTS.DB.PERSON, oId);
-        if (Object.keys(jsonP).length > 0) {
-            jsonP.licenses.push(id);
-            await Helper.updateItem(ctx, CONSTANTS.DB.PERSON, oId, jsonP);
-            const insRO = await ctx.stub.getState(CONSTANTS.DB.REGIONALOFFICE);
-            const jsonRO = JSON.parse(insRO.toString());
-            jsonRO.licenses.push(id);
-            await ctx.stub.putState(
-                CONSTANTS.DB.REGIONALOFFICE,
-                Buffer.from(JSON.stringify(jsonRO))
-            );
-            const json = JSON.parse(data);
-            json.status = CONSTANTS.FORMSTATUS.Submitted;
-            const item = { id, operator: oId };
-            item.form1 = json;
-            await Helper.createItem(ctx, CONSTANTS.DB.LICENSE, item);
-        } else {
-            throw new Error("Operator not Exist");
-        }
+        const json = JSON.parse(data);
+        json.status = CONSTANTS.FORMSTATUS.Submitted;
+        const item = {
+            id,
+            aerodrome: json,
+            operator: oId,
+            status: CONSTANTS.LICENSESTATUS.Waiting_For_Data,
+        };
+        await Helper.createItem(ctx, CONSTANTS.DB.LICENSE, item);
+
+        const personC = new PersonContract();
+        const jsonP = JSON.parse(await personC.getUserById(ctx, oId));
+        jsonP.licenses.push(id);
+        await Helper.updateItem(ctx, CONSTANTS.DB.PERSON, oId, jsonP);
+
+        const insRO = await ctx.stub.getState(CONSTANTS.DB.REGIONALOFFICE);
+        const jsonRO = JSON.parse(insRO.toString());
+        jsonRO.licenses.push(id);
+        await ctx.stub.putState(
+            CONSTANTS.DB.REGIONALOFFICE,
+            Buffer.from(JSON.stringify(jsonRO))
+        );
+        ctx.stub.setEvent(
+            `${CONSTANTS.LICENSESTATUS}-${id}`,
+            Buffer.from(JSON.stringify(item))
+        );
     }
 
     async saveForm(ctx, id, form, data) {
         const json = JSON.parse(data);
         json.status = CONSTANTS.FORMSTATUS.Submitted;
-        const license = await Helper.getById(ctx, CONSTANTS.DB.LICENSE, id);
-        if (Object.keys(id).length > 0) {
-            license[form] = json;
-            await Helper.updateItem(ctx, CONSTANTS.DB.LICENSE, id, license);
-        } else {
-            throw new Error("License not found");
-        }
+        const license = await Helper.getItemById(ctx, CONSTANTS.DB.LICENSE, id);
+        license[form] = json;
+        await Helper.updateItem(ctx, CONSTANTS.DB.LICENSE, id, license);
     }
 
     async updateForm(ctx, id, form, data) {
         const json = JSON.parse(data);
         json.status = CONSTANTS.FORMSTATUS.Edited;
-        const license = await Helper.getById(ctx, CONSTANTS.DB.LICENSE, id);
-        if (Object.keys(id).length > 0) {
-            license[form] = json;
-            await Helper.updateItem(ctx, CONSTANTS.DB.LICENSE, id, license);
-        } else {
-            throw new Error("License not found");
-        }
+        const license = await Helper.getItemById(ctx, CONSTANTS.DB.LICENSE, id);
+        license[form] = json;
+        await Helper.updateItem(ctx, CONSTANTS.DB.LICENSE, id, license);
     }
 
-    async updateFormByReviewer(ctx, id, data, form, status) {
+    async updateFormByReviewer(ctx, id, form, data, status) {
         const json = JSON.parse(data);
         json.status = status;
-        const license = await Helper.getById(ctx, CONSTANTS.DB.LICENSE, id);
-        if (Object.keys(id).length > 0) {
-            license[form] = json;
-            await Helper.updateItem(ctx, CONSTANTS.DB.LICENSE, id, license);
-        } else {
-            throw new Error("License not found");
+        const license = await Helper.getItemById(ctx, CONSTANTS.DB.LICENSE, id);
+        license[form] = json;
+        await Helper.updateItem(ctx, CONSTANTS.DB.LICENSE, id, license);
+    }
+
+    async getAllLicensesForStatus(ctx, status) {
+        const licenseR = await Helper.getItemsByField(
+            ctx,
+            CONSTANTS.DB.LICENSE,
+            "status",
+            status
+        );
+        const result = [];
+        for await (const e of licenseR) {
+            const license = await this.getLicenseById(e.id);
+            result.push(JSON.parse(license));
         }
+        return JSON.stringify(result);
+    }
+
+    async getAllLicensesForOperator(ctx, oid) {
+        const licenseR = await Helper.getItemsByField(
+            ctx,
+            CONSTANTS.DB.LICENSE,
+            "operator",
+            oid
+        );
+        const result = [];
+        for await (const e of licenseR) {
+            const license = await this.getLicenseById(e.id);
+            result.push(JSON.parse(license));
+        }
+        return JSON.stringify(result);
+    }
+
+    async getAllLicensesForInpector(ctx, iid) {
+        const licenseR = await Helper.getItemsByField(
+            ctx,
+            CONSTANTS.DB.LICENSE,
+            "inspector",
+            iid
+        );
+        const result = [];
+        for await (const e of licenseR) {
+            const license = await this.getLicenseById(e.id);
+            result.push(JSON.parse(license));
+        }
+        return JSON.stringify(result);
+    }
+
+    async getAllLicenses(ctx) {
+        const ins = await ctx.stub.getState(CONSTANTS.DB.LICENSE);
+        const json = JSON.parse(ins.toString());
+        const arr = [];
+        for await (const element of json) {
+            const insO = await ctx.stub.getState(
+                `${CONSTANTS.DB.LICENSE}-${element}`
+            );
+            const jsonO = JSON.parse(insO.toString());
+            arr.push(jsonO);
+        }
+        return JSON.stringify(arr);
+    }
+    async getHistory(ctx, id) {
+        return await Helper.getHistory(ctx, CONSTANTS.DB.LICENSE, id);
     }
 }
 module.exports = LicenseContract;

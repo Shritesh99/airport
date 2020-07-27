@@ -2,12 +2,12 @@ import { gql } from "apollo-server";
 
 const UserTypedef = gql`
   type Address {
-    id: ID!
-    line1: String!
+    id: ID
+    line1: String
     line2: String
-    pinCode: Int!
-    city: String!
-    state: State!
+    pinCode: Int
+    city: String
+    state: State
   }
 
   input AddressFields {

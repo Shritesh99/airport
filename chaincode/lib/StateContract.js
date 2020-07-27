@@ -6,44 +6,52 @@ const { CONSTANTS, Helper } = require("./utils");
 
 class StateContract extends Contract {
     async getStatebyID(ctx, id) {
-        if (id) {
-            const state = await Helper.getById(ctx, CONSTANTS.DB.STATE, id);
-            return JSON.stringify(state);
-        } else {
-            throw new Error("No id exist");
-        }
+        const state = await Helper.getItemById(ctx, CONSTANTS.DB.STATE, id);
+        return JSON.stringify(state);
     }
     async getStatebyName(ctx, state) {
-        if (state) {
-            const stateR = await Helper.getByField(
-                ctx,
-                CONSTANTS.DB.STATE,
-                "state",
-                state
-            );
-            return JSON.stringify(stateR);
-        } else {
-            throw new Error("No matching state");
-        }
-    }
-    async createState(ctx, id, state, country) {
         const stateR = await Helper.getByField(
             ctx,
             CONSTANTS.DB.STATE,
             "state",
             state
         );
-        if (!Object.keys(stateR).length > 0) {
-            const item = { id, state, country };
-            await Helper.createItem(ctx, CONSTANTS.DB.STATE, item);
-            return JSON.stringify(item);
-        } else {
+        if (stateR) {
             return JSON.stringify(stateR);
+        } else {
+            throw new Error("No State Exist");
+        }
+    }
+    async createState(ctx, data) {
+        const dataJson = JSON.parse(data);
+        const stateR = await Helper.getByField(
+            ctx,
+            CONSTANTS.DB.STATE,
+            "state",
+            dataJson.state
+        );
+        if (stateR) {
+            return JSON.stringify(stateR);
+        } else {
+            await Helper.createItem(ctx, CONSTANTS.DB.STATE, dataJson);
+            return JSON.stringify(dataJson);
         }
     }
     async getAllStates(ctx) {
-        const stateIns = await ctx.stub.getState(CONSTANTS.DB.STATE);
-        return stateIns.toString();
+        const ins = await ctx.stub.getState(CONSTANTS.DB.STATE);
+        const json = JSON.parse(ins.toString());
+        const arr = [];
+        for await (const element of json) {
+            const insO = await ctx.stub.getState(
+                `${CONSTANTS.DB.STATE}-${element}`
+            );
+            const jsonO = JSON.parse(insO.toString());
+            arr.push(jsonO);
+        }
+        return JSON.stringify(arr);
+    }
+    async getHistory(ctx, id) {
+        return await Helper.getHistory(ctx, CONSTANTS.DB.STATE, id);
     }
 }
 module.exports = StateContract;

@@ -1,24 +1,31 @@
 const fs = require("fs");
 const Promise = require("promise");
 const dotenv = require("dotenv");
-const IPFS = require("ipfs");
+const IPFS = require("ipfs-http-client");
 import * as nodemailer from "nodemailer";
 
 import * as Constants from "./constants";
 
+const node = new IPFS({
+  host: "ipfs.infura.io",
+  port: 5001,
+  protocol: "https",
+});
+
 dotenv.config();
 const { MAIL, MAILID, MAILPASSWORD, FILESPATH } = process.env;
 
-const fileToString = (file, inBytes = null) => {
+const fileToString = (file, inBase64 = null) => {
   const stream = file.createReadStream();
   const chunks = [];
+  let encoded;
   return new Promise((resolve, reject) => {
-    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("data", (chunk) =>
+      inBase64 ? (encoded = chunk.toString("base64")) : chunks.push(chunk)
+    );
     stream.on("error", reject);
     stream.on("end", () =>
-      resolve(
-        inBytes ? Buffer.concat(chunks) : Buffer.concat(chunks).toString("utf8")
-      )
+      resolve(inBase64 ? encoded : Buffer.concat(chunks).toString("utf8"))
     );
   });
 };
@@ -38,14 +45,8 @@ const pathToString = (file, inBytes = null) => {
 
 const putFileOnIpFs = async (file) => {
   const buffer = await fileToString(file, true);
-  const node = await IPFS.create({ silent: true });
   const results = await node.add(buffer);
-  let c = "";
-  for await (const { cid } of results) {
-    c = cid.toString();
-  }
-  await node.stop();
-  return c;
+  return `${Constants.IpfsUrl}${results.path}`;
 };
 
 const writeFile = (content, path) =>
@@ -62,7 +63,7 @@ const sendMailfromEnrolment = async (enrollment, email, password) => {
   const keyName = `${email}_sk`;
   const certiName = `${email}.pem`;
   await writeFile(enrollment.certificate, FILESPATH + certiName);
-  await writeFile(enrollment.key, FILESPATH + keyName);
+  await writeFile(enrollment.key.toBytes(), FILESPATH + keyName);
   const mail = nodemailer.createTransport({
     service: MAIL,
     auth: {

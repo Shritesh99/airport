@@ -16,7 +16,7 @@ const LicenseTypedef = gql`
     orentatation: String
     length: String
   }
-  type Form1 {
+  type Aerodrome {
     placeName: String
     state: State
     city: String
@@ -124,7 +124,7 @@ const LicenseTypedef = gql`
   type License {
     id: ID!
     operator: User
-    form1: Form1
+    aerodrome: Aerodrome
     form2: Form2
     form3: Form3
     form4: Form4

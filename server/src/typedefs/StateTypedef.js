@@ -1,27 +1,28 @@
-import { gql } from 'apollo-server';
+import { gql } from "apollo-server";
 
 const StateTypedef = gql`
-type State {
-    id: ID!
-    state: String!
-    country: String!
-}
-
-input StateFilter{
+  type State {
     id: ID
     state: String
-}
-input StateFields {
+    country: String
+  }
+
+  input StateFilter {
+    id: ID
+    state: String
+  }
+  input StateFields {
     state: String
     country: String
-}
-extend type Query {
+  }
+  extend type Query {
     state(filter: StateFilter): State
     states: [State]
-}
-extend type Mutation {
+    stateHistory(id: String): Boolean
+  }
+  extend type Mutation {
     createState(input: StateFields!): State
-}
+  }
 `;
 
 export default StateTypedef;

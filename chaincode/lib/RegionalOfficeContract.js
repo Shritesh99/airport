@@ -19,23 +19,23 @@ class RegionalOfficeContract extends Contract {
         const person = await personC.getUserById(ctx, json.head);
         json.head = JSON.parse(person);
         const insp = [];
-        json.inspectors.forEach(async (e) => {
+        for await (const e of json.inspectors) {
             const p = await personC.getUserById(ctx, e);
             insp.push(JSON.parse(p));
-        });
+        }
         json.inspectors = insp;
         const operators = [];
-        json.operators.forEach(async (e) => {
+        for await (const e of json.operators) {
             const p = await personC.getUserById(ctx, e);
             operators.push(JSON.parse(p));
-        });
+        }
         json.operators = operators;
         const licenseC = new LicenseContract();
         const licenses = [];
-        json.licenses.forEach(async (v) => {
+        for await (const v of json.licenses) {
             const l = await licenseC.getLicenseById(ctx, v);
             licenses.push(JSON.parse(l));
-        });
+        }
         json.licenses = licenses;
         return json.stringify(json);
     }
