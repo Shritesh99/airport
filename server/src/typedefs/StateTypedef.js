@@ -18,7 +18,7 @@ const StateTypedef = gql`
   extend type Query {
     state(filter: StateFilter): State
     states: [State]
-    stateHistory(id: String): Boolean
+    stateHistory(id: String): JSON
   }
   extend type Mutation {
     createState(input: StateFields!): State

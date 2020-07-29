@@ -25,6 +25,8 @@ const UserTypedef = gql`
     Owner
     AerodromeInspector
     RegionalOfficeHead
+    DefenceMinistry
+    HomeMinistry
   }
 
   type User {
@@ -61,7 +63,7 @@ const UserTypedef = gql`
   extend type Query {
     me: User!
     user(filter: UserFilter!): User
-    users(role: String): [User]
+    users(role: Roles): [User]
     signIn(
       email: String!
       password: String!
@@ -69,10 +71,17 @@ const UserTypedef = gql`
       signCertFile: Upload!
     ): AuthResponse
     logout: Boolean!
+    userHistory(id: String): JSON
   }
 
   extend type Mutation {
     createUser(input: UserFields!): User
+    signInMutation(
+      email: String!
+      password: String!
+      privatekeyFile: Upload!
+      signCertFile: Upload!
+    ): AuthResponse
   }
 `;
 

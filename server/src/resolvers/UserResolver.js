@@ -3,6 +3,7 @@ import FabricCAServices from "fabric-ca-client";
 import bcrypt from "bcrypt";
 import { v4 } from "uuid";
 import { Constants, FabricUtils, Utils, DB, Auth } from "../utils";
+import { use } from "passport";
 
 const {
   CHAINCODE,
@@ -19,7 +20,7 @@ const {
 
 const getContract = async (certi, key, mspId, email) => {
   const network = await FabricUtils.getNetwork(certi, key, mspId, email);
-  return network.getContract(CHAINCODE, Constants.PersonContract);
+  return network.getContract(CHAINCODE, Constants.Contracts.PersonContract);
 };
 const getContractFromAuth = async (auth) => {
   const network = await FabricUtils.getNetwork(
@@ -28,7 +29,7 @@ const getContractFromAuth = async (auth) => {
     auth.mspId,
     auth.email
   );
-  return network.getContract(CHAINCODE, Constants.PersonContract);
+  return network.getContract(CHAINCODE, Constants.Contracts.PersonContract);
 };
 
 const saveToRedis = async (id, token) => {
@@ -45,14 +46,7 @@ const saveToRedis = async (id, token) => {
 };
 
 const UserResolver = {
-  Roles: {
-    DGCA: "DGCA",
-    Admin: "Admin",
-    Operator: "Operator",
-    Owner: "Owner",
-    AerodromeInspector: "AerodromeInspector",
-    RegionalOfficeHead: "RegionalOfficeHead",
-  },
+  Roles: Constants.Roles,
   Query: {
     me: async (parent, args, context) => {
       const auth = context.auth;
@@ -148,7 +142,8 @@ const UserResolver = {
           user.email,
           enrollment.key.toBytes(),
           enrollment.certificate,
-          REGIONALOFFICEMSPID
+          REGIONALOFFICEMSPID,
+          user.role
         );
         await saveToRedis(user.id, token);
         return { token, user };
@@ -158,10 +153,22 @@ const UserResolver = {
         user.email,
         key,
         certi,
-        REGIONALOFFICEMSPID
+        REGIONALOFFICEMSPID,
+        user.role
       );
       await saveToRedis(user.id, token);
       return { token, user };
+    },
+    userHistory: async (parent, args, context) => {
+      const auth = context.auth;
+      if (auth) {
+        const contract = await getContract(auth);
+        const res = await contract.evaluateTransaction("getHistory", args.id);
+        //await FabricUtils.cleanup(auth.email);
+        return JSON.parse(res.toString());
+      } else {
+        return new AuthenticationError("User not authenticated");
+      }
     },
   },
 
@@ -240,6 +247,63 @@ const UserResolver = {
       } else {
         return new AuthenticationError("User not authenticated");
       }
+    },
+    signInMutation: async (parent, args) => {
+      const keyFile = await args.privatekeyFile;
+      const certiFile = await args.signCertFile;
+      const key = await Utils.fileToString(keyFile);
+      const certi = await Utils.fileToString(certiFile);
+      const contract = await getContract(
+        certi,
+        key,
+        REGIONALOFFICEMSPID,
+        args.email
+      );
+      const userR = await contract.evaluateTransaction(
+        "getUserByEmail",
+        args.email
+      );
+      const user = JSON.parse(userR.toString());
+      if (Object.keys(user).length === 0)
+        return new ForbiddenError("User not exist");
+      //await FabricUtils.cleanup(args.email);
+      const passwordMatch = await bcrypt.compare(args.password, user.password);
+      if (!passwordMatch) return new AuthenticationError("Invalid password");
+      if (args.email === "admin") {
+        const caCerti = await Utils.pathToString(REGIONALOFFICECATSL, true);
+        const ca = new FabricCAServices(
+          REGIONALOFFICECAURL,
+          {
+            trustedRoots: caCerti,
+            verify: false,
+          },
+          REGIONALOFFICECA
+        );
+        const enrollment = await ca.enroll({
+          enrollmentID: args.email,
+          enrollmentSecret: args.password,
+        });
+        const token = Auth.createJwt(
+          user.id,
+          user.email,
+          enrollment.key.toBytes(),
+          enrollment.certificate,
+          REGIONALOFFICEMSPID,
+          user.role
+        );
+        await saveToRedis(user.id, token);
+        return { token, user };
+      }
+      const token = Auth.createJwt(
+        user.id,
+        user.email,
+        key,
+        certi,
+        REGIONALOFFICEMSPID,
+        user.role
+      );
+      await saveToRedis(user.id, token);
+      return { token, user };
     },
   },
 };

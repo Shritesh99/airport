@@ -8,6 +8,13 @@ class LicenseContract extends Contract {
     async getLicenseById(ctx, id) {
         const license = await Helper.getItemById(ctx, CONSTANTS.DB.LICENSE, id);
         const personC = new PersonContract();
+        if (license.aerodrome.owner) {
+            const owner = await personC.getUserById(
+                ctx,
+                license.aerodrome.owner
+            );
+            license.aerodrome.owner = JSON.parse(owner);
+        }
         if (license.operator) {
             const operator = await personC.getUserById(ctx, license.operator);
             license.operator = JSON.parse(operator);
@@ -150,6 +157,22 @@ class LicenseContract extends Contract {
         }
         return JSON.stringify(arr);
     }
+    async generateLicense(ctx, id, url, expiry, date) {
+        const license = await Helper.getItemById(ctx, CONSTANTS.DB.LICENSE, id);
+        license.license = url;
+        license.expiry = expiry;
+        license.dateOfIssue = date;
+        await Helper.updateItem(ctx, CONSTANTS.DB.LICENSE, id, license);
+        return JSON.stringify(license);
+    }
+    // async renewLicense(ctx, id, renewData) {
+    //     const license = await Helper.getItemById(ctx, CONSTANTS.DB.LICENSE, id);
+    //     license.renew
+    //         ? license.renew.push(JSON.parse(renewData))
+    //         : (license.renew = [JSON.parse(renewData)]);
+    //     await Helper.updateItem(ctx, CONSTANTS.DB.LICENSE, id, license);
+    //     return JSON.stringify(license);
+    // }
     async getHistory(ctx, id) {
         return await Helper.getHistory(ctx, CONSTANTS.DB.LICENSE, id);
     }

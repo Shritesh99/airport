@@ -10,7 +10,7 @@ const getContract = async (auth) => {
     auth.mspId,
     auth.email
   );
-  return network.getContract(CHAINCODE, Constants.StateContract);
+  return network.getContract(CHAINCODE, Constants.Contracts.StateContract);
 };
 
 const StateResolver = {
@@ -25,14 +25,14 @@ const StateResolver = {
             args.filter.id
           );
           //await FabricUtils.cleanup(auth.email);
-          return JSON.parse(res);
+          return JSON.parse(res.toString());
         } else if (args.filter.state) {
           const res = await contract.evaluateTransaction(
             "getStatebyName",
             args.filter.state
           );
           //await FabricUtils.cleanup(auth.email);
-          return JSON.parse(res);
+          return JSON.parse(res.toString());
         } else {
           return new ForbiddenError("No filter provided");
         }
@@ -46,7 +46,7 @@ const StateResolver = {
         const contract = await getContract(auth);
         const res = await contract.evaluateTransaction("getAllStates");
         //await FabricUtils.cleanup(auth.email);
-        return JSON.parse(res);
+        return JSON.parse(res.toString());
       } else {
         return new AuthenticationError("User not authenticated");
       }
@@ -57,8 +57,7 @@ const StateResolver = {
         const contract = await getContract(auth);
         const res = await contract.evaluateTransaction("getHistory", args.id);
         //await FabricUtils.cleanup(auth.email);
-        const l = JSON.parse(res);
-        console.log(l);
+        return JSON.parse(res.toString());
       } else {
         return new AuthenticationError("User not authenticated");
       }
@@ -79,7 +78,7 @@ const StateResolver = {
           JSON.stringify(data)
         );
         //await FabricUtils.cleanup(auth.email);
-        return JSON.parse(res);
+        return JSON.parse(res.toString());
       } else {
         return new AuthenticationError("User not authenticated");
       }
